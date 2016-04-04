@@ -1,0 +1,446 @@
+# -*- coding: cp1252 -*-
+from Tkinter import *
+from tkFileDialog import *
+from tkMessageBox import *
+import string
+
+
+class Permbajtja:
+
+    permbajtja = []
+    id_st = []
+    nota = []
+    n = -1
+
+    def __init__(self, fname):
+        f = open(fname, 'r')
+        for i in f:
+            if len(string.split(i)) == 4 and string.split(i)[2].isdigit() and string.split(i)[3].isdigit():
+                self.permbajtja.append(string.split(i))
+        for i in range(len(self.permbajtja)):
+            self.gjeneroID(self.permbajtja[i][0],self.permbajtja[i][1])
+            self.shtoNoten(eval(self.permbajtja[i][2]),eval(self.permbajtja[i][3]))
+            self.permbajtja[i].insert(5, self.nota[i])
+            self.permbajtja[i].insert(0, self.id_st[i])
+
+    def gjejNoten(self, koll1, koll2):
+        mesatarja = (int(koll1)+int(koll2))/2
+        if mesatarja<51:
+            notap = '5 (Provim)'
+        elif mesatarja>=51 and mesatarja<61:
+            notap = 6
+        elif mesatarja>=61 and mesatarja<71:
+            notap = 7
+        elif mesatarja>=71 and mesatarja<81:
+            notap = 8
+        elif mesatarja>=81 and mesatarja<91:
+            notap = 9
+        elif mesatarja>=91 and mesatarja<=100:
+            notap = 10
+        else:
+            notap = '!'
+        return str(notap)
+
+    def shtoNoten(self, koll1, koll2):
+        self.n = self.n + 1
+        self.nota.append(self.gjejNoten(koll1,koll2))
+        return self.nota[self.n]
+
+
+    def gjeneroID(self, emri, mbiemri):
+            ascii1 = 0
+            ascii2 = 0
+            for k in range(len(emri)):
+                ascii1 = ord(emri[k]) + ascii1
+            for j in range(len(mbiemri)):
+                ascii2 = ord(mbiemri[j]) + ascii2
+            idd = ascii1+ascii2+self.n
+            self.id_st.append(idd)
+            return idd
+
+    def fshi(self, ID):
+        v = 0
+        for i in range(len(self.permbajtja)):
+            if self.permbajtja[i][0] == ID:
+                v=i
+        if self.permbajtja[v][0] == ID:
+            del self.permbajtja[v]
+            del self.nota[v]
+            del self.id_st[v]
+            self.n = self.n - 1
+            
+    def fshigjithe(self):
+        del self.permbajtja[:]
+        del self.nota[:]
+        del self.id_st[:]
+        self.n = -1
+
+    def fshiprovim(self):
+        a = []
+        for i in range(len(self.nota)):
+            if self.nota[i] == '5 (Provim)':
+                a.append(i)
+        self.nota = [x for x in self.nota if x!='5 (Provim)']
+        self.permbajtja = [i for j, i in enumerate(self.permbajtja) if j not in a]
+        self.id_st = [i for j, i in enumerate(self.id_st) if j not in a]
+        self.n = self.n - len(a)
+
+    def fshicudit(self):
+        a = []
+        for i in range(len(self.nota)):
+            if self.nota[i] == '!':
+                a.append(i)
+        self.nota = [x for x in self.nota if x!='!']
+        self.permbajtja = [i for j, i in enumerate(self.permbajtja) if j not in a]
+        self.id_st = [i for j, i in enumerate(self.id_st) if j not in a]
+        self.n = self.n - len(a)
+
+    def shto(self, emri, mbiemri, koll1,  koll2):
+        if koll1.isdigit() and koll2.isdigit():
+            ID = self.gjeneroID(emri, mbiemri)
+            nota = self.shtoNoten(koll1, koll2)
+            st = [ID,emri,mbiemri,koll1,koll2,nota]
+            self.permbajtja.append(st)
+
+    def ndrysho(self, ID, koll1, koll2):
+        for i in range(len(self.permbajtja)):
+            if self.permbajtja[i][0] == ID:
+                self.permbajtja[i][3]=str(koll1)
+                self.permbajtja[i][4]=str(koll2)
+                self.permbajtja[i][5]=self.nota[i]=self.gjejNoten(koll1,koll2)
+
+    def statistikat(self):
+        st_kaluar = 0
+        st_mbet = 0
+        nota_mes = 0
+        for i in self.nota:
+            if i == '5 (Provim)':
+                st_mbet=st_mbet+1
+            elif i == '6':
+                st_kaluar=st_kaluar+1
+                nota_mes = nota_mes + 6
+            elif i == '7':
+                st_kaluar=st_kaluar+1
+                nota_mes = nota_mes + 7
+            elif i == '8':
+                st_kaluar=st_kaluar+1
+                nota_mes = nota_mes + 8
+            elif i == '9':
+                st_kaluar=st_kaluar+1
+                nota_mes = nota_mes + 9
+            elif i == '10':
+                st_kaluar=st_kaluar+1
+                nota_mes = nota_mes + 10
+        if nota_mes != 0:
+            nota_mes=float(nota_mes)/st_kaluar
+        teksti = 'Nota mesatare: %.3f'%(nota_mes)+'\nNumri i studentëve gjithsej: %d\nNumri i studentëve që kanë kaluar me kollokviume: %d\nNumri i studentëve që kanë mbetur për provim: %d' %(len(self.permbajtja),st_kaluar,st_mbet)
+        return teksti
+
+    def listonota(self, notta):
+        teksti = '='*100
+        str2 = "\n    ID       Emri              Mbiemri              Kollok. I      Kollok. II        Nota     \n"+'='*100+'\n'
+        teksti = teksti + str2
+        for i in range(len(self.nota)):
+            if notta == self.nota[i] or (notta == '5' and self.nota[i] == '5 (Provim)'):
+                str1 = '    '+str(self.permbajtja[i][0]).ljust(9)+\
+                                  self.permbajtja[i][1].title().ljust(18)+self.permbajtja[i][2].title().ljust(21)+\
+                                  self.permbajtja[i][3].ljust(15)+\
+                                  self.permbajtja[i][4].ljust(18)+self.permbajtja[i][5].ljust(15)+' \n'
+                teksti = teksti + str1
+        return teksti
+
+    def listoemrat(self, emri, mbiemri):
+        teksti = '='*100
+        str2 = "\n    ID       Emri              Mbiemri              Kollok. I      Kollok. II        Nota     \n"+'='*100+'\n'
+        teksti = teksti + str2
+        for i in range(len(self.permbajtja)):
+            if emri.lower() == self.permbajtja[i][1].lower() and mbiemri.lower() == self.permbajtja[i][2].lower():
+                str1 = '    '+str(self.permbajtja[i][0]).ljust(9)+\
+                                  self.permbajtja[i][1].title().ljust(18)+self.permbajtja[i][2].title().ljust(21)+\
+                                  self.permbajtja[i][3].ljust(15)+\
+                                  self.permbajtja[i][4].ljust(18)+self.permbajtja[i][5].ljust(15)+' \n'
+                teksti = teksti + str1
+        return teksti
+        
+                
+    def toString(self):
+        teksti = '='*100
+        str2 = "\n    ID       Emri              Mbiemri              Kollok. I      Kollok. II        Nota     \n"+'='*100+'\n'
+        teksti = teksti + str2
+        for i in range(len(self.permbajtja)):
+            str1 = '    '+str(self.permbajtja[i][0]).ljust(9)+\
+                              self.permbajtja[i][1].title().ljust(18)+self.permbajtja[i][2].title().ljust(21)+\
+                              self.permbajtja[i][3].ljust(15)+\
+                              self.permbajtja[i][4].ljust(18)+self.permbajtja[i][5].ljust(15)+' \n'
+            teksti = teksti + str1
+        return teksti
+
+class App:
+
+    global clicked   
+    clicked = False
+    global clicked2   
+    clicked2 = False
+    global clicked3   
+    clicked3 = False
+    
+    def __init__(self):
+        root2 = Tk()
+        root2.title("Rezultatet")
+        root2.resizable(width="FALSE", height="FALSE")
+        root2.geometry('820x620')
+        shkrim2 = Label(root2,font=("Century Schoolbook", 30, 'italic'), text='Rezultatet', fg='red')
+        shkrim2.grid(row=0)
+        S = Scrollbar(root2)
+        self.T = Text(root2, height=25, width=100)
+        S.grid(row=2,column=1, sticky='ns')
+        self.T.grid(row=2)
+        S.config(command=self.T.yview)
+        self.T.config(yscrollcommand=S.set)
+        root2.withdraw()
+        root2.update_idletasks()
+        x = (root2.winfo_screenwidth() - root2.winfo_reqwidth()) / 2
+        y = (root2.winfo_screenheight() - root2.winfo_reqheight()) / 2
+        root2.geometry("+%d+%d" % (x, y))
+        root2.deiconify()
+        filename = askopenfilename(filetypes=[("Text files","*.txt")])
+        self.permbajtja = Permbajtja(filename)
+        self.T.insert(END, self.permbajtja.toString())
+        f1 = Frame(root2, height=30, width=800)
+        f1.pack_propagate(0)
+        f1.grid(row=3)
+        f = Frame(root2,height=30, width=800)
+        f.pack_propagate(0)
+        f.grid(row=1)
+        f2 = Frame(root2)
+        f2.grid(row=5)
+        f3 = Frame(root2)
+        f3.grid(row=6)
+        f4 = Frame(root2)
+        f4.grid(row=7)
+        labell2 = Label(f, text="   ")
+        labell2.pack(side=LEFT)
+        button1 = Button(f, text="Ruaj", command=lambda: self.ruaj(self.permbajtja.toString(), self.permbajtja.statistikat()))
+        button1.pack(side=LEFT)
+        labell100 = Label(f, text=" ")
+        labell100.pack(side=LEFT)
+        button5 = Button(f, text="Statistikat", command=self.stats)
+        button5.pack(side=LEFT)
+        self.T.configure(state=DISABLED)
+        s = IntVar()
+        self.e = Entry(f2, font="Helvetica 11",  textvariable=s, fg='gray')
+        self.e.bind("<Button-1>", self.shtyp3)
+        self.e.pack(side=LEFT)
+        button2 = Button(f2, text="Fshi", command=self.fshii)
+        button2.pack(side=LEFT)
+        button3 = Button(f1, text="Fresko", command=self.fresko)
+        button3.pack(side=RIGHT)
+        labell3 = Label(f1, text="Nota: ")
+        labell3.pack(side=LEFT)
+        self.egjej = Entry(f1, font="Helvetica 11")
+        self.egjej.pack(side=LEFT)
+        button3 = Button(f1, text="Listo", command=self.listonota)
+        button3.pack(side=LEFT)
+        labell4 = Label(f1, text="Emri: ")
+        labell4.pack(side=LEFT)
+        self.emri = Entry(f1, font="Helvetica 11")
+        self.emri.pack(side=LEFT)
+        labell5 = Label(f1, text="Mbiemri: ")
+        labell5.pack(side=LEFT)
+        self.mbiemri = Entry(f1, font="Helvetica 11")
+        self.mbiemri.pack(side=LEFT)
+        button13 = Button(f1, text="Listo", command=self.listoemrat)
+        button13.pack(side=LEFT)
+        button12 = Button(f, text="Me pikëçuditëse në notë", command=self.fshicudi)
+        button12.pack(side=RIGHT)
+        labell101 = Label(f, text=" ")
+        labell101.pack(side=RIGHT)
+        button11 = Button(f, text="Ata që kanë mbetur në provim", command=self.fshimbetur)
+        button11.pack(side=RIGHT)
+        labell102 = Label(f, text=" ")
+        labell102.pack(side=RIGHT)
+        button10 = Button(f, text="Të gjithë", command=self.fshitegjithe)
+        button10.pack(side=RIGHT)
+        labell103 = Label(f, text=" ")
+        labell103.pack(side=RIGHT)
+        label0 = Label(f, text="    Fshi nga lista:")
+        label0.pack(side=RIGHT)
+        emri = StringVar()
+        self.e2 = Entry(f3, font="Helvetica 11", textvariable=emri, fg='gray')
+        self.e2.bind("<Button-1>", self.shtyp1)
+        emri.set('Emri')
+        self.e2.pack(side=LEFT)
+        mbiemri = StringVar()
+        self.e3 = Entry(f3, font="Helvetica 11", textvariable=mbiemri, fg='gray')
+        self.e3.bind("<Button-1>", self.shtyp1)
+        mbiemri.set('Mbiemri')
+        self.e3.pack(side=LEFT)
+        koll1 = StringVar()
+        self.e4 = Entry(f3, font="Helvetica 11",  textvariable=koll1, fg='gray')
+        self.e4.bind("<Button-1>", self.shtyp1)
+        koll1.set('Koll. I')
+        self.e4.pack(side=LEFT)
+        koll2 = StringVar()
+        self.e5 = Entry(f3, font="Helvetica 11",  textvariable=koll2, fg='gray')
+        self.e5.bind("<Button-1>", self.shtyp1)
+        koll2.set('Koll. II')
+        self.e5.pack(side=LEFT)
+        button4 = Button(f3, text="Shto", command=self.shto)
+        button4.pack(side=LEFT)
+        idd = StringVar()
+        self.e6 = Entry(f4, font="Helvetica 11",  textvariable=idd, fg='gray')
+        self.e6.bind("<Button-1>", self.shtyp2)
+        idd.set('ID')
+        self.e6.pack(side=LEFT)
+        koll11 = StringVar()
+        self.e7 = Entry(f4, font="Helvetica 11",  textvariable=koll11, fg='gray')
+        self.e7.bind("<Button-1>", self.shtyp2)
+        koll11.set('Koll. I')
+        self.e7.pack(side=LEFT)
+        koll22 = StringVar()
+        self.e8 = Entry(f4, font="Helvetica 11",  textvariable=koll22, fg='gray')
+        self.e8.bind("<Button-1>", self.shtyp2)
+        koll22.set('Koll. II')
+        self.e8.pack(side=LEFT)
+        button5 = Button(f4, text="Ndrysho", command=self.ndrysho)
+        button5.pack(side=LEFT)
+
+
+    def shto(self):
+        self.permbajtja.shto(self.e2.get(),self.e3.get(),self.e4.get(),self.e5.get())
+        self.fresko()
+
+    def ndrysho(self):
+        self.permbajtja.ndrysho(int(self.e6.get()),int(self.e7.get()),int(self.e8.get()))
+        self.fresko()
+        
+    def listonota(self):
+        self.T.configure(state=NORMAL)
+        self.T.delete(1.0, END)
+        self.T.insert(END, self.permbajtja.listonota(self.egjej.get()))
+        self.T.configure(state=DISABLED)
+        self.egjej.delete(0, 'end')
+
+    def listoemrat(self):
+        self.T.configure(state=NORMAL)
+        self.T.delete(1.0, END)
+        self.T.insert(END, self.permbajtja.listoemrat(self.emri.get(),self.mbiemri.get()))
+        self.T.configure(state=DISABLED)
+        self.emri.delete(0, 'end')
+        self.mbiemri.delete(0, 'end')
+        
+
+    def fshitegjithe(self):
+        result = askquestion("Fshi", "Jeni i sigurt për t'a fshirë të gjithë listën?", icon='warning')
+        if result == 'yes':
+            self.permbajtja.fshigjithe()
+            self.fresko()
+        else:
+            return
+
+    def fshimbetur(self):
+        result = askquestion("Fshi", "Jeni i sigurt për t'i fshirë studentët që\nkanë mbetur në provim nga lista?", icon='warning')
+        if result == 'yes':
+            self.permbajtja.fshiprovim()
+            self.fresko()
+        else:
+            return
+
+    def fshicudi(self):
+        result = askquestion("Fshi", "Jeni i sigurt për t'i fshirë studentët që\nkanë pikëçuditëse në kolonën nota?", icon='warning')
+        if result == 'yes':
+            self.permbajtja.fshicudit()
+            self.fresko()
+        else:
+            return
+
+    def fshii(self):
+        result = askquestion("Fshi", "Jeni i sigurt për t'a fshirë studentin me\nID %s (nëse ekziston i tillë)?"%(int(self.e.get())), icon='warning')
+        if result == 'yes':
+            self.permbajtja.fshi(int(self.e.get()))
+            self.fresko()
+        else:
+            return
+
+    def shtyp1(self, event):
+        global clicked
+        if (clicked == False):
+            self.e2.delete(0, END) 
+            self.e2.config(fg = "black")
+            self.e3.delete(0, END) 
+            self.e3.config(fg = "black")
+            self.e4.delete(0, END)
+            self.e4.config(fg = "black")
+            self.e5.delete(0, END)
+            self.e5.config(fg = "black")
+            clicked = True
+
+    def shtyp2(self, event):
+        global clicked2
+        if (clicked2 == False):
+            self.e6.delete(0, END) 
+            self.e6.config(fg = "black")
+            self.e6.delete(0, END) 
+            self.e6.config(fg = "black")
+            self.e7.delete(0, END) 
+            self.e7.config(fg = "black")
+            self.e8.delete(0, END) 
+            self.e8.config(fg = "black")
+            clicked2 = True
+
+    def shtyp3(self, event):
+        global clicked3
+        if (clicked3 == False):
+            self.e.delete(0, END) 
+            self.e.config(fg = "black")
+            clicked3 = True
+
+    def fresko(self):
+        self.T.configure(state=NORMAL)
+        self.T.delete(1.0, END)
+        self.T.insert(END, self.permbajtja.toString())
+        self.T.configure(state=DISABLED)
+        self.e.delete(0, 'end')
+        self.e2.delete(0, 'end')
+        self.e3.delete(0, 'end')
+        self.e4.delete(0, 'end')
+        self.e5.delete(0, 'end')
+        self.e6.delete(0, 'end')
+        self.e7.delete(0, 'end')
+        self.e8.delete(0, 'end')
+
+    def stats(self):
+        showinfo('Statistikat',self.permbajtja.statistikat())
+
+    def ruaj(self, teksti, teksti2):
+        f = asksaveasfile(mode='w', defaultextension=".txt")
+        if f is None:
+            return
+        f.write(teksti+'\n\n\n'+teksti2)
+        f.close()
+
+if __name__=='__main__':
+    
+    def info():
+        showinfo('Udhëzim',"File-i duhet të ketë rreshtat me te dhënat\ne studentëve në formatin:\n\n   Emri   Mbiemri   Kollokv.1   Kollokv.2\n\nduke i ndarë vetëm me hapësira dhe\nassesi me diçka tjetër!")
+
+    def openshfleto():
+        root.destroy()
+        a = App()
+
+    root = Tk()
+    root.title("Rezultatet")
+    root.resizable(width="FALSE", height="FALSE")
+    root.geometry('200x200')
+    teksti1 = Label(root, text="\nPër t'a kërkuar file-in\nshtypni butonin më poshtë\n").pack()
+    button1 = Button(root, text="Shfleto", command=openshfleto)
+    button1.pack()
+    zbrazetire = Label(root, text="\nNuk dini se çfarë\nfile-i duhet të hapni?\n").pack()
+    buttoni2 = Button(root, text='Udhëzim', command=info).pack()
+    root.withdraw()
+    root.update_idletasks()
+    x = (root.winfo_screenwidth() - root.winfo_reqwidth()) / 2
+    y = (root.winfo_screenheight() - root.winfo_reqheight()) / 2
+    root.geometry("+%d+%d" % (x, y))
+    root.deiconify()
+    root.mainloop()
